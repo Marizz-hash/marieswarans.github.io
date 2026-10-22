@@ -179,6 +179,8 @@ a:hover{ text-decoration:underline; }
 .btn.primary{ background:var(--accent-dim); border-color:var(--accent-line); color:var(--accent); }
 .btn.primary:hover{ background:rgba(var(--accent-rgb),0.22); }
 
+main{ position:relative; z-index:1; }
+footer{ position:relative; z-index:1; }
 section{ padding:70px 0; border-bottom:1px solid var(--border-soft); }
 section:last-of-type{ border-bottom:none; }
 .section-head{ margin-bottom:34px; }
@@ -326,13 +328,136 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
 .confetti-piece{ position:fixed; top:-20px; z-index:300; pointer-events:none; border-radius:1px; }
 
+/* ---------- full-page scan grid ---------- */
+.site-grid{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(var(--accent-rgb),0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb),0.035) 1px, transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse 1400px 900px at 50% 0%, black, transparent 85%);
+}
+
+/* ---------- side rails (fill the empty gutters on wide screens) ---------- */
+.rail{
+  position:fixed; top:0; bottom:0; width:64px; z-index:1; pointer-events:none;
+  display:none;
+}
+.rail.left{ left:0; }
+.rail.right{ right:0; }
+.rail-ticks{
+  position:absolute; inset:0;
+  background-image:repeating-linear-gradient(
+    to bottom, rgba(var(--accent-rgb),0.16) 0, rgba(var(--accent-rgb),0.16) 1px,
+    transparent 1px, transparent 64px
+  );
+  opacity:0.5;
+}
+.rail.left .rail-ticks{ left:50%; width:1px; background:rgba(var(--accent-rgb),0.12); }
+.rail.right .rail-ticks{ left:50%; width:1px; background:rgba(var(--accent-rgb),0.12); }
+.rail-label{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-90deg);
+  font-family:var(--mono); font-size:10.5px; letter-spacing:0.25em; text-transform:uppercase;
+  color:var(--text-faint); white-space:nowrap;
+}
+.rail-marker{
+  position:absolute; left:50%; transform:translate(-50%,-50%);
+  width:9px; height:9px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 12px var(--accent-glow);
+  top:0; transition:top 0.08s linear, background 0.4s ease;
+}
+.rail-marker::after{
+  content:attr(data-pct);
+  position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  font-family:var(--mono); font-size:10px; color:var(--accent); white-space:nowrap;
+}
+.rail.left .rail-marker::after{ left:auto; right:16px; }
+.rail-corner{ position:absolute; width:14px; height:14px; border:1.5px solid var(--accent-line); opacity:0.5; }
+.rail-corner.top{ top:24px; }
+.rail-corner.bottom{ bottom:24px; }
+.rail.left .rail-corner{ left:50%; margin-left:-7px; border-right:none; border-bottom-width:0; }
+.rail.left .rail-corner.top{ border-bottom:none; }
+.rail.right .rail-corner{ left:50%; margin-left:-7px; }
+
+@media (min-width:1300px){ .rail{ display:block; } }
+
+/* ---------- aurora background (whole page) ---------- */
+.aurora{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.aurora span{
+  position:absolute; border-radius:50%; filter:blur(80px); opacity:0.32;
+  mix-blend-mode:screen; will-change:transform;
+}
+.aurora span.a1{ width:560px; height:560px; background:var(--accent); top:-180px; left:-120px; animation:auroraDrift1 26s ease-in-out infinite; }
+.aurora span.a2{ width:460px; height:460px; background:var(--accent-2); top:30%; right:-160px; animation:auroraDrift2 32s ease-in-out infinite; }
+.aurora span.a3{ width:420px; height:420px; background:var(--sev-medium); bottom:-140px; left:20%; animation:auroraDrift3 29s ease-in-out infinite; opacity:0.18; }
+@keyframes auroraDrift1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(80px, 60px); } }
+@keyframes auroraDrift2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-70px, 90px); } }
+@keyframes auroraDrift3{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(60px, -50px); } }
+
+/* ---------- grain texture overlay ---------- */
+.grain{
+  position:fixed; inset:0; z-index:90; pointer-events:none; opacity:0.035; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- hero shield graphic ---------- */
+.hero-graphic{
+  position:absolute; top:40%; right:-40px; transform:translateY(-50%);
+  width:360px; height:360px; opacity:0.5; pointer-events:none; z-index:0;
+}
+.hero-graphic svg{ width:100%; height:100%; }
+@media (max-width:900px){ .hero-graphic{ display:none; } }
+
+/* ---------- scanning line over terminal ---------- */
+.terminal{ position:relative; }
+.scan-line{
+  position:absolute; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow:0 0 14px 2px var(--accent-glow);
+  top:0; opacity:0.85;
+  animation:scanSweep 4.5s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes scanSweep{
+  0%{ top:0; opacity:0; }
+  8%{ opacity:0.85; }
+  50%{ top:100%; opacity:0.85; }
+  58%{ opacity:0; }
+  100%{ top:100%; opacity:0; }
+}
+
+/* ---------- section icons ---------- */
+.eyebrow svg{ width:15px; height:15px; stroke:var(--accent); flex-shrink:0; }
+.eyebrow::before{ display:none; }
+
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  .aurora span, .scan-line{ display:none; }
 }
 
 </style>
 </head>
 <body>
+
+<div class="site-grid" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true">
+  <span class="a1"></span><span class="a2"></span><span class="a3"></span>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="rail left" aria-hidden="true">
+  <div class="rail-ticks"></div>
+  <div class="rail-corner top"></div>
+  <div class="rail-corner bottom"></div>
+  <div class="rail-label">engagement report</div>
+</div>
+<div class="rail right" aria-hidden="true">
+  <div class="rail-ticks"></div>
+  <div class="rail-corner top"></div>
+  <div class="rail-corner bottom"></div>
+  <div class="rail-marker" id="railMarker" data-pct="0%"></div>
+  <div class="rail-label">scroll position</div>
+</div>
 
 <div id="boot">
   <div class="boot-box" id="bootBox"></div>
@@ -369,7 +494,30 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
 <header class="hero wrap" id="heroArea">
   <canvas id="particles"></canvas>
+
+  <div class="hero-graphic" aria-hidden="true">
+    <svg viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shieldGrad" x1="0" y1="0" x2="200" y2="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="var(--accent)"/>
+          <stop offset="1" stop-color="var(--accent-2)"/>
+        </linearGradient>
+      </defs>
+      <path d="M100 8 L184 40 V104 C184 154 148 196 100 212 C52 196 16 154 16 104 V40 Z" stroke="url(#shieldGrad)" stroke-width="2.5" opacity="0.9"/>
+      <path d="M100 30 L164 54 V102 C164 140 136 172 100 186 C64 172 36 140 36 102 V54 Z" stroke="url(#shieldGrad)" stroke-width="1" opacity="0.4"/>
+      <path d="M72 104 L92 124 L132 80" stroke="url(#shieldGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="100" cy="8" r="3" fill="var(--accent)"/>
+      <circle cx="184" cy="40" r="3" fill="var(--accent-2)"/>
+      <circle cx="16" cy="40" r="3" fill="var(--accent-2)"/>
+      <line x1="100" y1="8" x2="100" y2="-14" stroke="url(#shieldGrad)" stroke-width="1.5" opacity="0.6"/>
+      <line x1="184" y1="40" x2="206" y2="28" stroke="url(#shieldGrad)" stroke-width="1.5" opacity="0.6"/>
+      <circle cx="206" cy="28" r="2.5" fill="var(--accent)"/>
+      <circle cx="100" cy="-14" r="2.5" fill="var(--accent-2)"/>
+    </svg>
+  </div>
+
   <div class="terminal">
+    <div class="scan-line" aria-hidden="true"></div>
     <div class="terminal-bar">
       <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
       <span class="terminal-title">session — marieswaran@engagement:~</span>
@@ -396,7 +544,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="summary" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">01 / summary</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20 6v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>01 / summary</div>
       <h2 class="section-title">Executive summary</h2>
     </div>
     <div class="file-card">
@@ -411,7 +559,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="experience" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">02 / engagements</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>02 / engagements</div>
       <h2 class="section-title">Experience</h2>
       <p class="section-desc">Client and organizational engagements, most recent first.</p>
     </div>
@@ -458,7 +606,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="findings" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">03 / research</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6"/><path d="M12 7V5M8 6l-1-1.5M16 6l1-1.5M6 13H4M20 13h-2M8.5 18l-1 1.5M15.5 18l1 1.5"/></svg>03 / research</div>
       <h2 class="section-title">Security research &amp; disclosures</h2>
       <p class="section-desc">Independent findings, responsibly disclosed. Targets redacted.</p>
     </div>
@@ -505,7 +653,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="terminal" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">04 / try it yourself</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>04 / try it yourself</div>
       <h2 class="section-title">Interactive terminal</h2>
       <p class="section-desc">A real (sandboxed) shell. Type <code>help</code> to see what it knows — and try <code>matrix</code>.</p>
     </div>
@@ -526,7 +674,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="skills" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">05 / toolbelt</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2-2z"/></svg>05 / toolbelt</div>
       <h2 class="section-title">Skills &amp; tooling</h2>
     </div>
 
@@ -585,7 +733,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="certs" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">06 / certifications</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-2.5L17 21l-1.5-7.5"/></svg>06 / certifications</div>
       <h2 class="section-title">Certifications</h2>
       <p class="section-desc">17 certifications completed in 2025 across API security, OWASP, and red teaming.</p>
     </div>
@@ -612,7 +760,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="education" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">07 / education</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>07 / education</div>
       <h2 class="section-title">Education</h2>
     </div>
     <div class="edu-row">
@@ -623,7 +771,7 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
 
   <section id="contact" class="wrap" data-reveal>
     <div class="section-head">
-      <div class="eyebrow">08 / contact</div>
+      <div class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>08 / contact</div>
       <h2 class="section-title">Get in touch</h2>
     </div>
     <div class="contact-card">
@@ -721,10 +869,16 @@ footer .stamp{ color:var(--accent); transition:color 0.3s ease; }
   }
 
   var progressBar = document.getElementById('progressBar');
+  var railMarker = document.getElementById('railMarker');
   function updateProgress(){
     var h = document.documentElement;
     var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-    progressBar.style.width = (isFinite(scrolled) ? scrolled : 0) + '%';
+    var pct = isFinite(scrolled) ? scrolled : 0;
+    progressBar.style.width = pct + '%';
+    if(railMarker){
+      railMarker.style.top = pct + '%';
+      railMarker.setAttribute('data-pct', Math.round(pct) + '%');
+    }
   }
   document.addEventListener('scroll', updateProgress, { passive:true });
   updateProgress();
